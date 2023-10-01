@@ -1,13 +1,15 @@
 # Голосовой ассистент КЕША 1.0 BETA
 import os
 import time
+import datetime
+import webbrowser
+import random
+import types
+
 import speech_recognition as sr  # запись звука и рапознавание речи
 from fuzzywuzzy import fuzz  # нечёткое сравнение
 import pyttsx3  # воспроизведение текста
-import datetime
-import webbrowser
 import wikipedia
-import random
 
 import freeGPT
 from asyncio import run
@@ -18,16 +20,16 @@ gpt = freeGPT.gpt3.Completion()
 opts = {
     "alias": ('масяня', 'мось', 'мася'),
     "tbr": ('скажи', 'расскажи', 'покажи', 'сколько', 'произнеси'),
-    "cmds": {
-        "ctime": ('текущее время', 'сейчас времени', 'который час'),
-        "stupid1": ('анекдот', 'рассмеши меня', 'ты знаешь анекдоты'),
-        "openCode": ('открой код', 'открой программу'),
-        "openGoogle": ('открой google', 'открой интернет'),
-        "wikipedia": ('wikipedia', 'википедия', 'вики', 'wiki'),
-        'open youtube': ('youtube', 'открой youtube'),
-        'open stackoverflow': ('stack overflow', 'открой stack overflow'),
-        'bye': ('пока', 'досвидание', 'bye', 'good', 'до встречи')
-    }
+    "cmds": (
+        ("ctime", ('текущее время', 'сейчас времени', 'который час')),
+        ("stupid1", ('анекдот', 'рассмеши меня', 'ты знаешь анекдоты')),
+        ("openCode", ('открой код', 'открой программу')),
+        ("openGoogle", ('открой google', 'открой интернет')),
+        ("wikipedia", ('wikipedia', 'википедия', 'вики', 'wiki')),
+        ('open youtube', ('youtube', 'открой youtube')),
+        ('open stackoverflow', ('stack overflow', 'открой stack overflow')),
+        ('bye', ('пока', 'досвидание', 'bye', 'good', 'до встречи')),
+    )
 }
 
 user = 'user'
@@ -45,23 +47,24 @@ def speak(what: str) -> None:
 
 def callback(recognizer: sr.Recognizer, audio):
     try:
-        voice = recognizer.recognize_google(audio, language="ru-RU").lower()
+        voice: str = recognizer.recognize_google(audio, language="ru-RU").lower()
 
         print("[log] Распознано: " + voice)
 
         if voice.startswith(opts["alias"]):
             # обращаются к Кеше
-            cmd = voice
+
+            prepared_voice = voice
 
             for x in opts['alias']:
-                cmd = cmd.replace(x, "").strip()
+                prepared_voice = prepared_voice.replace(x, "").strip()
 
             for x in opts['tbr']:
-                cmd = cmd.replace(x, "").strip()
+                prepared_voice = prepared_voice.replace(x, "").strip()
 
             # распознаем и выполняем команду
-            cmd = recognize_cmd(cmd)
-            execute_cmd(cmd['cmd'])
+            cmd = recognize_cmd(prepared_voice)
+            execute_cmd(cmd)
 
     except sr.UnknownValueError:
         print("[log] Голос не распознан!")
@@ -69,34 +72,37 @@ def callback(recognizer: sr.Recognizer, audio):
         print("[log] Неизвестная ошибка, проверьте интернет!")
 
 
-def recognize_cmd(cmd: str) -> dict[str, str | int]:
+def recognize_cmd(cmd: str) -> str:
     """
     распознавание команды
     :param cmd: команда
     :return: {'cmd': команда, 'percent': соответствие}
     """
     RC = {'cmd': cmd, 'percent': 48}
-    for c, v in opts['cmds'].items():
-
+    for c, v in opts['cmds']:
         for x in v:
             vrt = fuzz.ratio(cmd, x)
             if vrt > RC['percent']:
                 RC['cmd'] = c
                 RC['percent'] = vrt
-    return RC
+    return RC['cmd']
 
 
-def execute_cmd(cmd: str) -> None:
+def execute_cmd(cmd: str | types.FunctionType) -> None:
     """
     Выполняет команду
-    :param cmd: соманда
+    :param cmd: соманда, str or func
     :return: None
     """
+
+    if isinstance(cmd, types.FunctionType):
+        cmd()
+        return
 
     if cmd == 'ctime':
         # сказать текущее время
         now = datetime.datetime.now()
-        speak(f"Сейчас {str(now.hour)}:{str(now.minute)}")
+        speak(f"Сейчас {now.strftime('%H:%M')}")
 
     elif cmd == 'stupid1':
         # рассказать анекдот
