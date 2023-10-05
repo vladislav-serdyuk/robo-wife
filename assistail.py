@@ -26,7 +26,7 @@ opts = {
         ("stupid1", ('анекдот', 'рассмеши меня', 'ты знаешь анекдоты')),
         ("openCode", ('открой код', 'открой программу')),
         ("openGoogle", ('открой google', 'открой интернет')),
-        ("wikipedia", ('wikipwedia', 'википедия', 'вики', 'wiki')),
+        ("wikipedia", ('wikipedia', 'википедия', 'вики', 'wiki')),
         ('open youtube', ('youtube', 'открой youtube')),
         ('open stackoverflow', ('stack overflow', 'открой stack overflow')),
         ('bye', ('пока', 'досвидание', 'bye', 'good', 'до встречи')),
