@@ -5,6 +5,7 @@ import datetime
 import webbrowser
 import random
 import types
+import importlib
 
 import speech_recognition as sr  # запись звука и рапознавание речи
 from fuzzywuzzy import fuzz  # нечёткое сравнение
@@ -20,17 +21,18 @@ gpt = freeGPT.gpt3.Completion()
 opts = {
     "alias": ('масяня', 'мось', 'мася'),
     "tbr": ('скажи', 'расскажи', 'покажи', 'сколько', 'произнеси'),
-    "cmds": (
+    "cmds": [
         ("ctime", ('текущее время', 'сейчас времени', 'который час')),
         ("stupid1", ('анекдот', 'рассмеши меня', 'ты знаешь анекдоты')),
         ("openCode", ('открой код', 'открой программу')),
         ("openGoogle", ('открой google', 'открой интернет')),
-        ("wikipedia", ('wikipedia', 'википедия', 'вики', 'wiki')),
+        ("wikipedia", ('wikipwedia', 'википедия', 'вики', 'wiki')),
         ('open youtube', ('youtube', 'открой youtube')),
         ('open stackoverflow', ('stack overflow', 'открой stack overflow')),
         ('bye', ('пока', 'досвидание', 'bye', 'good', 'до встречи')),
-    )
+    ]
 }
+
 
 user = 'user'
 system = 'system'
@@ -96,7 +98,7 @@ def execute_cmd(cmd: str | types.FunctionType) -> None:
     """
 
     if isinstance(cmd, types.FunctionType):
-        cmd()
+        cmd(speak)
         return
 
     if cmd == 'ctime':
@@ -143,6 +145,15 @@ def execute_cmd(cmd: str | types.FunctionType) -> None:
         speak(res)
 
 
+def add_extensions():
+    for file_name in os.listdir(path='extensions'):
+        if len(file_name) < 3 or file_name[-3:] != '.py':  # if it's not python file
+            continue
+        module = importlib.import_module(f'extensions.{file_name[:-3]}')  # без .py
+        if 'command' in dir(module):  # если в модуле есть command: tuple[_f, tuple[str]], то
+            opts['cmds'].append(module.command)  # add extension
+
+
 def start() -> None:
     """
     Здоровается и наченает прослушку
@@ -176,6 +187,8 @@ speak_engine = pyttsx3.init()
 # Только если у вас установлены голоса для синтеза речи!
 voices = speak_engine.getProperty('voices')
 speak_engine.setProperty('voice', voices[0].id)
+
+add_extensions()
 
 if __name__ == '__main__':
     start()
