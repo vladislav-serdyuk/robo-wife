@@ -15,7 +15,7 @@
 ### extensions
 Для добавления расширения
 создайте папку extensions
-и поестите python файл формата
+и поместите python файл формата
 
 >def run(speak, sw_status):  # speak and sw_status are functions, example: speak('Good')
 >  ...
