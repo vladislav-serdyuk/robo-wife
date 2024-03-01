@@ -21,22 +21,20 @@ gpt = freeGPT.gpt3.Completion()
 opts = {
     "alias": ('масяня', 'мось', 'мася'),
     "tbr": ('скажи', 'расскажи', 'покажи', 'сколько', 'произнеси'),
-    "cmds": [
-        ("ctime", ('текущее время', 'сейчас времени', 'который час')),
-        ("stupid1", ('анекдот', 'рассмеши меня', 'ты знаешь анекдоты')),
-        ("openCode", ('открой код', 'открой программу')),
-        ("openGoogle", ('открой google', 'открой интернет')),
-        ("wikipedia", ('wikipedia', 'википедия', 'вики', 'wiki')),
-        ('open youtube', ('youtube', 'открой youtube')),
-        ('open stackoverflow', ('stack overflow', 'открой stack overflow')),
-        ('bye', ('пока', 'досвидание', 'bye', 'good', 'до встречи')),
-    ]
+    "cmds": {
+        'main': [
+            ("ctime", ('текущее время', 'сейчас времени', 'который час')),
+            ("stupid1", ('анекдот', 'рассмеши меня', 'ты знаешь анекдоты')),
+            ("openCode", ('открой код', 'открой программу')),
+            ("openGoogle", ('открой google', 'открой интернет')),
+            ("wikipedia", ('wikipwedia', 'википедия', 'вики', 'wiki')),
+            ('open youtube', ('youtube', 'открой youtube')),
+            ('open stackoverflow', ('stack overflow', 'открой stack overflow')),
+            ('bye', ('пока', 'досвидание', 'bye', 'good', 'до встречи')),
+        ]}
 }
 
-
-user = 'user'
-system = 'system'
-assistant = 'assistant'
+status = 'main'
 
 
 # функции
@@ -45,6 +43,11 @@ def speak(what: str) -> None:
     speak_engine.say(what)
     speak_engine.runAndWait()
     speak_engine.stop()
+
+
+def sw_status(st):
+    global status
+    status = st
 
 
 def callback(recognizer: sr.Recognizer, audio):
@@ -81,7 +84,7 @@ def recognize_cmd(cmd: str) -> str:
     :return: {'cmd': команда, 'percent': соответствие}
     """
     RC = {'cmd': cmd, 'percent': 48}
-    for c, v in opts['cmds']:
+    for c, v in opts['cmds'][status]:
         for x in v:
             vrt = fuzz.ratio(cmd, x)
             if vrt > RC['percent']:
@@ -98,7 +101,7 @@ def execute_cmd(cmd: str | types.FunctionType) -> None:
     """
 
     if isinstance(cmd, types.FunctionType):
-        cmd(speak)
+        cmd(speak, sw_status)
         return
 
     if cmd == 'ctime':
@@ -140,18 +143,23 @@ def execute_cmd(cmd: str | types.FunctionType) -> None:
     elif cmd == '':
         print('[log] No command: cmd = ""')
 
-    else:
+    elif status == 'main':
         res = run(gpt.create(cmd))
         speak(res)
 
 
 def add_extensions():
+    # global opts
     for file_name in os.listdir(path='extensions'):
         if len(file_name) < 3 or file_name[-3:] != '.py':  # if it's not python file
             continue
         module = importlib.import_module(f'extensions.{file_name[:-3]}')  # без .py
-        if 'command' in dir(module):  # если в модуле есть command: tuple[_f, tuple[str]], то
-            opts['cmds'].append(module.command)  # add extension
+        if 'commands' in dir(module):  # если в модуле есть command: dict[_f, tuple[str]], то
+            for st, command in module.commands.items():
+                if st not in opts['cmds']:
+                    opts['cmds'][st] = []
+                for cmd in command:
+                    opts['cmds'][st].append(cmd)  # add extension
 
 
 def start() -> None:
