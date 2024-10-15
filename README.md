@@ -17,15 +17,16 @@
 создайте папку extensions
 и поместите python файл формата
 
->def run(speak, sw_status):  # speak and sw_status are functions, example: speak('Good')
->  ...
->
->command = {'main': [
->                     (run, ('string1', 'string2', ...)),
->                      ...
->                   ],
->           'light on':[...]
->          }  # эта переменая обезательна
->             # string - как вызывать команду, пример:
->             # (run, ('turn on light', 'включи лампу', ...))
->
+```
+def run(speak, sw_status):  # speak and sw_status are functions, example: speak('Good')
+  ...
+
+command = {'main': [
+                     (run, ('string1', 'string2', ...)),
+                      ...
+                   ],
+           'light on':[...]
+          }  # эта переменая обезательна
+             # string - как вызывать команду, пример:
+             # (run, ('turn on light', 'включи лампу', ...))
+```
